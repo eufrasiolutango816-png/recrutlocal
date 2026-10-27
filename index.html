@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RecrutLocal - Candidature</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
+    .card { background: white; max-width: 420px; margin: 40px auto; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    h2 { margin-top: 0; color: #111; font-size: 24px; text-align: center; }
+    p.sub { color: #666; font-size: 14px; text-align: center; margin-bottom: 24px; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #333; }
+    input, select { width: 100%; padding: 12px; margin-bottom: 18px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 15px; }
+    button { width: 100%; padding: 14px; background: #0070f3; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    function App() {
+      const [submitted, setSubmitted] = React.useState(false);
+      if (submitted) {
+        return (
+          <div className="card" style={{textAlign: 'center'}}>
+            <h2>🎉 Candidature envoyée !</h2>
+            <p>Le gérant a bien reçu vos informations.</p>
+          </div>
+        );
+      }
+      return (
+        <div className="card">
+          <h2>Postuler en 1 minute 🚀</h2>
+          <p className="sub">Complétez ce mini-formulaire.</p>
+          <form onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }}>
+            <label>Prénom</label>
+            <input required type="text" placeholder="Ex: Jean" />
+            <label>Nom</label>
+            <input required type="text" placeholder="Ex: Dupont" />
+            <label>Téléphone Mobile</label>
+            <input required type="tel" placeholder="06 12 34 56 78" />
+            <label>Disponible le week-end et en soirée ?</label>
+            <select>
+              <option value="true">Oui, tout à fait</option>
+              <option value="false">Non</option>
+            </select>
+            <label>Expérience dans le domaine</label>
+            <select>
+              <option value="0">Aucune expérience</option>
+              <option value="<1">Moins d'un an</option>
+              <option value="1-3">1 à 3 ans</option>
+              <option value=">3">Plus de 3 ans</option>
+            </select>
+            <button type="submit">Envoyer ma candidature</button>
+          </form>
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
