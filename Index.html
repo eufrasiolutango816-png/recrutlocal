@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RecrutLocal - Candidature</title>
   
-  <!-- Chargement des bibliothèques React et Supabase -->
+  <!-- Libraries React et Supabase -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -25,11 +25,9 @@
 <body>
   <div id="root"></div>
 
-  <!-- DEBUT DU CODE JAVASCRIPT -->
   <script type="text/babel">
-    // Remplace par ton URL et ta clé Supabase
-    const SUPABASE_URL = 'https://TON-PROJET.supabase.co';
-    const SUPABASE_KEY = 'TA_CLE_ANON_PUBLIC';
+    const SUPABASE_URL = 'https://bouuhrddzrolkzxvnydw.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_gee-Ly8I2QyduMq_rPXcyA_hg3jnhHi';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     function App() {
@@ -45,7 +43,6 @@
         e.preventDefault();
         setLoading(true);
 
-        // Envoi des données vers Supabase
         const { error } = await supabaseClient.from('candidates').insert([{
           first_name: firstName,
           last_name: lastName,
@@ -110,6 +107,5 @@
 
     ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   </script>
-  <!-- FIN DU CODE JAVASCRIPT -->
 </body>
 </html>
