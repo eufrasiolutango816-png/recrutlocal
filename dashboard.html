@@ -13,42 +13,80 @@
     label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #333; }
     input { width: 100%; padding: 12px; margin-bottom: 16px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 15px; }
     button { width: 100%; padding: 14px; background: #0070f3; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
+    .btn-secondary { background: #111; margin-top: 10px; }
     .qr-box { text-align: center; background: #fafafa; padding: 16px; border-radius: 12px; border: 1px dashed #ccc; margin-bottom: 20px; }
     .qr-box img { width: 180px; height: 180px; margin: 10px 0; }
     .badge { display: inline-block; background: #e6f0ff; color: #0066cc; padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
     .candidate-card { background: white; padding: 16px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #eee; }
     .btn-contact { display: inline-block; padding: 10px 14px; background: #25D366; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; margin-top: 8px; }
+
+    /* ZONE D'IMPRESSION DE L'AFFICHE VITRINE */
+    #printable-poster { display: none; }
+    @media print {
+      body * { visibility: hidden; }
+      #printable-poster, #printable-poster * { visibility: visible; }
+      #printable-poster {
+        display: block !important;
+        position: absolute;
+        left: 0; top: 0; width: 100%;
+        text-align: center;
+        padding: 40px 20px;
+        font-family: system-ui, sans-serif;
+      }
+      .poster-title { font-size: 38px; font-weight: 900; color: #111; text-transform: uppercase; margin-bottom: 10px; }
+      .poster-shop { font-size: 26px; color: #0070f3; font-weight: bold; margin-bottom: 30px; }
+      .poster-qr { width: 280px; height: 280px; margin: 20px auto; }
+      .poster-sub { font-size: 22px; color: #444; font-weight: 600; margin-top: 20px; }
+    }
   </style>
 </head>
 <body>
+
+  <!-- Affiche masquée à l'écran, visible uniquement lors de l'impression -->
+  <div id="printable-poster">
+    <div class="poster-title">ON RECRUTE ! 🚀</div>
+    <div class="poster-shop" id="poster-shop-name">...</div>
+    <p class="poster-sub">Scannez le QR Code ci-dessous pour postuler en 1 minute depuis votre téléphone :</p>
+    <img id="poster-qr-img" class="poster-qr" src="" alt="QR Code">
+    <p style="font-size: 16px; color: #777; margin-top: 40px;">Propulsé par RecrutLocal</p>
+  </div>
+
   <div class="container">
 
-    <!-- ÉCRAN 1 : CONNEXION / INSCRIPTION COMMERÇANT -->
+    <!-- ÉCRAN : INSCRIPTION / CONNEXION -->
     <div id="auth-section" class="card">
-      <h2>Espace Gérant 🏪</h2>
-      <p style="text-align:center; color:#666; font-size:14px; margin-bottom:20px;">Entrez le nom de votre commerce pour accéder à votre tableau de bord.</p>
+      <h2 id="auth-title">Connexion Gérant 🏪</h2>
+      <p style="text-align:center; color:#666; font-size:14px; margin-bottom:20px;">Accédez à vos candidatures et à votre affiche QR Code.</p>
       
-      <label>Nom de votre commerce</label>
-      <input id="shopNameInput" type="text" placeholder="Ex: Boulangerie du Centre">
+      <div id="shopNameField" style="display:none;">
+        <label>Nom de votre commerce</label>
+        <input id="shopNameInput" type="text" placeholder="Ex: Boulangerie Paul">
+      </div>
 
-      <button onclick="loginShop()">Accéder à mon espace</button>
+      <label>Email professionnel</label>
+      <input id="emailInput" type="email" placeholder="gerant@commerce.com">
+
+      <label>Mot de passe</label>
+      <input id="passwordInput" type="password" placeholder="••••••••">
+
+      <button id="btnAuthAction" onclick="handleAuth()">Se connecter</button>
+      <button class="btn-secondary" id="btnToggleAuth" onclick="toggleAuthMode()">Créer un compte commerce</button>
     </div>
 
-    <!-- ÉCRAN 2 : DASHBOARD PRIVÉ DU COMMERCE -->
+    <!-- ÉCRAN : DASHBOARD GÉRANT -->
     <div id="dashboard-section" style="display: none;">
       <div class="card">
-        <div style="display:flex; justify-between; align-items:center; margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
           <h2 id="shop-title" style="margin:0; text-align:left;">...</h2>
           <button onclick="logoutShop()" style="width:auto; padding:6px 12px; background:#eee; color:#333; font-size:12px;">Déconnexion</button>
         </div>
 
         <div class="qr-box">
-          <div style="font-weight: 600; font-size: 15px;">Votre QR Code Candidat 📱</div>
-          <p style="font-size: 12px; color: #666; margin: 4px 0 10px 0;">Imprimez ce QR code sur votre vitrine :</p>
+          <div style="font-weight: 600; font-size: 15px;">Votre Affiche Vitrine 📱</div>
+          <p style="font-size: 13px; color: #666; margin: 4px 0 10px 0;">Imprimez votre affiche prête à l'emploi :</p>
           <img id="qr-image" src="" alt="QR Code">
-          <div>
-            <a id="candidate-link" href="#" target="_blank" style="font-size: 12px; color: #0070f3;">Ouvrir la page candidat</a>
-          </div>
+          
+          <button onclick="window.print()" style="background:#25D366; margin-top:10px;">🖨️ Imprimer mon Affiche Vitrine (A4)</button>
         </div>
 
         <h3>Candidatures reçues 📥</h3>
@@ -63,62 +101,85 @@
     const SUPABASE_KEY = 'sb_publishable_gee-Ly8I2QyduMq_rPXcyA_hg3jnhHi';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Vérifier si un commerce est déjà connecté dans le navigateur
-    let currentShop = localStorage.getItem('recrutlocal_shop');
+    let isSignUp = false;
 
-    if (currentShop) {
-      showDashboard();
-    }
+    // Vérifier si l'utilisateur est déjà connecté
+    checkSession();
 
-    function loginShop() {
-      const input = document.getElementById('shopNameInput').value.trim();
-      if (!input) {
-        alert('Veuillez entrer le nom de votre commerce.');
-        return;
+    async function checkSession() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        showDashboard(session.user);
       }
-      // Nettoyage de l'ID pour créer une clé propre (ex: "Boulangerie du Centre" -> "boulangerie-du-centre")
-      currentShop = input.toLowerCase().replace(/[^a-z0-9]/g, '-');
-      localStorage.setItem('recrutlocal_shop', currentShop);
-      localStorage.setItem('recrutlocal_shop_name', input);
-      showDashboard();
     }
 
-    function logoutShop() {
-      localStorage.removeItem('recrutlocal_shop');
-      localStorage.removeItem('recrutlocal_shop_name');
+    function toggleAuthMode() {
+      isSignUp = !isSignUp;
+      document.getElementById('auth-title').innerText = isSignUp ? 'Créer un compte 🏪' : 'Connexion Gérant 🏪';
+      document.getElementById('shopNameField').style.display = isSignUp ? 'block' : 'none';
+      document.getElementById('btnAuthAction').innerText = isSignUp ? 'Créer mon espace' : 'Se connecter';
+      document.getElementById('btnToggleAuth').innerText = isSignUp ? 'J\'ai déjà un compte' : 'Créer un compte commerce';
+    }
+
+    async function handleAuth() {
+      const email = document.getElementById('emailInput').value.trim();
+      const password = document.getElementById('passwordInput').value.trim();
+      const shopName = document.getElementById('shopNameInput').value.trim();
+
+      if (!email || !password) return alert('Remplissez l\'email et le mot de passe.');
+
+      if (isSignUp) {
+        if (!shopName) return alert('Entrez le nom de votre commerce.');
+        const { data, error } = await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: { data: { shop_name: shopName } }
+        });
+        if (error) alert(error.message);
+        else {
+          alert('Compte créé avec succès !');
+          showDashboard(data.user);
+        }
+      } else {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) alert('Email ou mot de passe incorrect.');
+        else showDashboard(data.user);
+      }
+    }
+
+    async function logoutShop() {
+      await supabaseClient.auth.signOut();
       location.reload();
     }
 
-    function showDashboard() {
+    function showDashboard(user) {
       document.getElementById('auth-section').style.display = 'none';
       document.getElementById('dashboard-section').style.display = 'block';
 
-      const shopName = localStorage.getItem('recrutlocal_shop_name') || currentShop;
+      const shopName = user.user_metadata?.shop_name || 'Mon Commerce';
       document.getElementById('shop-title').innerText = shopName;
+      document.getElementById('poster-shop-name').innerText = shopName;
 
-      // Générer le lien candidat et le QR code unique
-      const candidateUrl = `https://recrutlocal.vercel.app/?shop=${encodeURIComponent(currentShop)}`;
-      document.getElementById('candidate-link').href = candidateUrl;
-      document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(candidateUrl)}`;
+      // Génération du lien unique lié à l'ID de l'utilisateur Supabase
+      const candidateUrl = `https://recrutlocal.vercel.app/?shop=${user.id}`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(candidateUrl)}`;
+      
+      document.getElementById('qr-image').src = qrUrl;
+      document.getElementById('poster-qr-img').src = qrUrl;
 
-      loadCandidates();
+      loadCandidates(user.id);
     }
 
-    async function loadCandidates() {
+    async function loadCandidates(userId) {
       const { data, error } = await supabaseClient
         .from('candidates')
         .select('*')
-        .eq('company_id', currentShop)
+        .eq('company_id', userId)
         .order('created_at', { ascending: false });
 
       const container = document.getElementById('list');
 
-      if (error) {
-        container.innerHTML = '<p>Erreur de chargement.</p>';
-        return;
-      }
-
-      if (!data || data.length === 0) {
+      if (error || !data || data.length === 0) {
         container.innerHTML = '<p style="color:#777; font-size:14px;">Aucune candidature reçue pour le moment.</p>';
         return;
       }
