@@ -42,7 +42,7 @@
 </head>
 <body>
 
-  <!-- Affiche masquée à l'écran, visible uniquement lors de l'impression -->
+  <!-- Affiche vitrine prête pour l'impression A4 -->
   <div id="printable-poster">
     <div class="poster-title">ON RECRUTE ! 🚀</div>
     <div class="poster-shop" id="poster-shop-name">...</div>
@@ -76,7 +76,7 @@
     <!-- ÉCRAN : DASHBOARD GÉRANT -->
     <div id="dashboard-section" style="display: none;">
       <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <div style="display:flex; justify-between; align-items:center; margin-bottom:15px;">
           <h2 id="shop-title" style="margin:0; text-align:left;">...</h2>
           <button onclick="logoutShop()" style="width:auto; padding:6px 12px; background:#eee; color:#333; font-size:12px;">Déconnexion</button>
         </div>
@@ -103,7 +103,6 @@
 
     let isSignUp = false;
 
-    // Vérifier si l'utilisateur est déjà connecté
     checkSession();
 
     async function checkSession() {
@@ -160,7 +159,7 @@
       document.getElementById('shop-title').innerText = shopName;
       document.getElementById('poster-shop-name').innerText = shopName;
 
-      // Génération du lien unique lié à l'ID de l'utilisateur Supabase
+      // URL unique pour les candidats qui pointe vers la racine du site
       const candidateUrl = `https://recrutlocal.vercel.app/?shop=${user.id}`;
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(candidateUrl)}`;
       
