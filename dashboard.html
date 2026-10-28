@@ -6,62 +6,66 @@
   <title>RecrutLocal - Espace Commerçant</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
-    .container { max-width: 500px; margin: 0 auto; }
-    .card { background: white; padding: 24px; border-radius: 16px; margin-bottom: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-    h2 { margin-top: 0; color: #111; font-size: 22px; text-align: center; }
-    label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #333; }
-    input { width: 100%; padding: 12px; margin-bottom: 16px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 15px; }
-    button { width: 100%; padding: 14px; background: #0070f3; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
-    .btn-secondary { background: #111; margin-top: 10px; }
-    .btn-stripe { background: #635bff; color: white; text-decoration: none; display: block; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 10px; }
-    .qr-box { text-align: center; background: #fafafa; padding: 16px; border-radius: 12px; border: 1px dashed #ccc; margin-bottom: 20px; }
-    .qr-box img { width: 180px; height: 180px; margin: 10px 0; }
-    .badge { display: inline-block; background: #e6f0ff; color: #0066cc; padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
-    .candidate-card { background: white; padding: 16px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #eee; }
-    .btn-contact { display: inline-block; padding: 10px 14px; background: #25D366; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; margin-top: 8px; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f1f5f9; margin: 0; padding: 16px; color: #0f172a; }
+    .container { max-width: 520px; margin: 0 auto; }
+    .card { background: white; padding: 20px; border-radius: 16px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
+    h2, h3 { margin-top: 0; }
+    label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 13px; color: #475569; }
+    input, select { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 14px; }
+    button { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; }
+    .btn-secondary { background: #0f172a; margin-top: 8px; }
+    .btn-stripe { background: #635bff; color: white; text-decoration: none; display: block; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold; }
+    
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .stat-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 10px; text-align: center; }
+    .stat-num { font-size: 22px; font-weight: 800; color: #2563eb; }
 
-    /* AFFICHE A4 IMPRIMABLE */
+    .candidate-card { background: white; border: 1px solid #e2e8f0; padding: 14px; border-radius: 12px; margin-bottom: 12px; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+    .status-nouveau { background: #dbeafe; color: #1e40af; }
+    .status-rappele { background: #fef3c7; color: #92400e; }
+    .status-embauche { background: #dcfce7; color: #166534; }
+    .status-refuse { background: #fee2e2; color: #991b1b; }
+
+    .actions-grid { display: flex; gap: 8px; margin-top: 10px; }
+    .btn-action { flex: 1; text-align: center; padding: 8px; border-radius: 6px; font-size: 13px; font-weight: bold; text-decoration: none; color: white; }
+    .btn-call { background: #0284c7; }
+    .btn-wa { background: #16a34a; }
+
+    /* Impression Affiche A4 */
     #printable-poster { display: none; }
     @media print {
       body * { visibility: hidden; }
       #printable-poster, #printable-poster * { visibility: visible; }
-      #printable-poster {
-        display: block !important;
-        position: absolute;
-        left: 0; top: 0; width: 100%;
-        text-align: center;
-        padding: 40px 20px;
-        font-family: system-ui, sans-serif;
-      }
-      .poster-title { font-size: 38px; font-weight: 900; color: #111; text-transform: uppercase; margin-bottom: 10px; }
-      .poster-shop { font-size: 26px; color: #0070f3; font-weight: bold; margin-bottom: 30px; }
-      .poster-qr { width: 280px; height: 280px; margin: 20px auto; }
-      .poster-sub { font-size: 22px; color: #444; font-weight: 600; margin-top: 20px; }
+      #printable-poster { display: block !important; position: absolute; left: 0; top: 0; width: 100%; text-align: center; padding: 40px 20px; }
+      .poster-title { font-size: 42px; font-weight: 900; text-transform: uppercase; }
+      .poster-shop { font-size: 28px; color: #2563eb; font-weight: bold; margin-bottom: 10px; }
+      .poster-job { font-size: 24px; color: #334155; margin-bottom: 30px; font-weight: 600; }
+      .poster-qr { width: 300px; height: 300px; margin: 20px auto; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Affiche Vitrine A4 -->
+  <!-- Affiche Vitrine A4 Imprimable -->
   <div id="printable-poster">
     <div class="poster-title">ON RECRUTE ! 🚀</div>
     <div class="poster-shop" id="poster-shop-name">...</div>
-    <p class="poster-sub">Scannez le QR Code ci-dessous pour postuler en 1 minute depuis votre téléphone :</p>
+    <div class="poster-job" id="poster-job-name">Poste à pourvoir</div>
+    <p style="font-size:20px; color:#475569;">Scannez pour postuler en 1 minute depuis votre téléphone :</p>
     <img id="poster-qr-img" class="poster-qr" src="" alt="QR Code">
-    <p style="font-size: 16px; color: #777; margin-top: 40px;">Propulsé par RecrutLocal</p>
+    <p style="font-size: 14px; color: #94a3b8; margin-top: 40px;">Recrutement en direct via RecrutLocal</p>
   </div>
 
   <div class="container">
 
-    <!-- ECRAN INSCRIPTION / CONNEXION -->
+    <!-- AUTHENTIFICATION -->
     <div id="auth-section" class="card">
-      <h2 id="auth-title">Connexion Gérant 🏪</h2>
-      <p style="text-align:center; color:#666; font-size:14px; margin-bottom:20px;">Accédez à vos candidatures et à votre affiche QR Code.</p>
+      <h2 id="auth-title">Espace Commerçant 🏪</h2>
       
       <div id="shopNameField" style="display:none;">
         <label>Nom de votre commerce</label>
-        <input id="shopNameInput" type="text" placeholder="Ex: Boulangerie Paul">
+        <input id="shopNameInput" type="text" placeholder="Ex: Boulangerie Saint-Michel">
       </div>
 
       <label>Email professionnel</label>
@@ -71,39 +75,73 @@
       <input id="passwordInput" type="password" placeholder="••••••••">
 
       <button id="btnAuthAction" onclick="handleAuth()">Se connecter</button>
-      <button class="btn-secondary" id="btnToggleAuth" onclick="toggleAuthMode()">Créer un compte commerce</button>
+      <button class="btn-secondary" id="btnToggleAuth" onclick="toggleAuthMode()">Créer un compte gratuit</button>
       
-      <p style="text-align:center; margin-top:16px;">
-        <a href="#" onclick="resetPassword()" style="color:#0070f3; font-size:13px; text-decoration:none; font-weight:600;">Mot de passe oublié ?</a>
+      <p style="text-align:center; margin-top:14px;">
+        <a href="#" onclick="resetPassword()" style="color:#2563eb; font-size:13px; text-decoration:none;">Mot de passe oublié ?</a>
       </p>
     </div>
 
-    <!-- ECRAN DASHBOARD GÉRANT -->
+    <!-- DASHBOARD -->
     <div id="dashboard-section" style="display: none;">
+      
       <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-          <h2 id="shop-title" style="margin:0; text-align:left;">...</h2>
-          <button onclick="logoutShop()" style="width:auto; padding:6px 12px; background:#eee; color:#333; font-size:12px;">Déconnexion</button>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h2 id="shop-title" style="margin:0;">...</h2>
+          <button onclick="logoutShop()" style="width:auto; padding:6px 10px; background:#e2e8f0; color:#334155; font-size:12px;">Déconnexion</button>
         </div>
 
-        <div class="qr-box">
-          <div style="font-weight: 600; font-size: 15px;">Votre Affiche Vitrine 📱</div>
-          <p style="font-size: 13px; color: #666; margin: 4px 0 10px 0;">Imprimez votre affiche prête à l'emploi :</p>
-          <img id="qr-image" src="" alt="QR Code">
+        <!-- STATS DE CONVERSION -->
+        <div class="stats-grid" style="margin-top:16px;">
+          <div class="stat-box">
+            <div class="stat-num" id="stat-scans">0</div>
+            <div style="font-size:12px; color:#64748b;">Scans de l'affiche</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" id="stat-candidates">0 / 5</div>
+            <div style="font-size:12px; color:#64748b;">Candidatures ce mois</div>
+          </div>
+        </div>
+
+        <!-- REGLAGES RECRUTEMENT -->
+        <div style="background:#f8fafc; padding:12px; border-radius:10px; margin-bottom:16px;">
+          <label>Poste recherché sur l'affiche</label>
+          <input id="jobTitleInput" type="text" placeholder="Ex: Serveur / Vendeur">
           
-          <button onclick="window.print()" style="background:#25D366; margin-top:10px;">🖨️ Imprimer mon Affiche Vitrine (A4)</button>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+            <span style="font-size:13px; font-weight:600;">Statut du recrutement :</span>
+            <button id="btn-toggle-open" onclick="toggleRecruitmentStatus()" style="width:auto; padding:6px 12px; font-size:12px; background:#16a34a;">Ouvert</button>
+          </div>
+          <button onclick="updateShopSettings()" style="margin-top:10px; background:#0f172a; padding:8px; font-size:13px;">Mettre à jour l'affiche</button>
         </div>
 
-        <!-- ZONE MONÉTISATION STRIPE -->
-        <div style="background:#f0f7ff; border:1px solid #cce3ff; padding:16px; border-radius:12px; margin-bottom:20px;">
-          <div style="font-weight:bold; color:#0055b3; font-size:15px;">⚡ Passer à l'offre Pro (29€/mois)</div>
-          <p style="font-size:13px; color:#444; margin:6px 0 10px 0;">Débloquez les candidatures illimitées et le support prioritaire.</p>
-          <a class="btn-stripe" href="https://buy.stripe.com/test_8x28wRbpqdOSei51mLfMA00" target="_blank">S'abonner pour 29€ / mois</a>
+        <!-- IMPRESSION -->
+        <div style="text-align:center; padding:10px; border:1px dashed #cbd5e1; border-radius:10px;">
+          <img id="qr-image" src="" style="width:140px; height:140px;" alt="QR Code">
+          <button onclick="window.print()" style="background:#16a34a; margin-top:8px;">🖨️ Imprimer l'Affiche Vitrine (A4)</button>
         </div>
-
-        <h3>Candidatures reçues 📥</h3>
-        <div id="list">Chargement des candidatures...</div>
       </div>
+
+      <!-- OFFRE PRO REVISITÉE -->
+      <div class="card" style="background:#eff6ff; border:1px solid #bfdbfe;">
+        <div style="font-weight:bold; color:#1e40af; font-size:15px;">🚀 Offre Pro (12€ / mois ou 29€ pour 30 jours)</div>
+        <ul style="font-size:13px; color:#334155; padding-left:18px; margin:8px 0;">
+          <li>Candidatures illimitées (dépassez la limite de 5)</li>
+          <li>Alertes SMS instantanées à chaque candidature</li>
+          <li>Export Excel / CSV de vos candidats</li>
+        </ul>
+        <a class="btn-stripe" href="https://buy.stripe.com/test_8x28wRbpqdOSei51mLfMA00" target="_blank">S'abonner pour 12€ / mois</a>
+      </div>
+
+      <!-- LISTE DES CANDIDATS -->
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3>Candidats reçus</h3>
+          <button onclick="exportCSV()" style="width:auto; padding:6px 10px; background:#0284c7; font-size:12px;">Export CSV</button>
+        </div>
+        <div id="list">Chargement...</div>
+      </div>
+
     </div>
 
   </div>
@@ -113,23 +151,22 @@
     const SUPABASE_KEY = 'sb_publishable_gee-Ly8I2QyduMq_rPXcyA_hg3jnhHi';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let isSignUp = false;
+    let currentShop = null;
+    let candidatesData = [];
 
     checkSession();
 
     async function checkSession() {
       const { data: { session } } = await supabaseClient.auth.getSession();
-      if (session) {
-        showDashboard(session.user);
-      }
+      if (session) showDashboard(session.user);
     }
 
     function toggleAuthMode() {
-      isSignUp = !isSignUp;
+      const isSignUp = document.getElementById('shopNameField').style.display === 'none';
       document.getElementById('auth-title').innerText = isSignUp ? 'Créer un compte 🏪' : 'Connexion Gérant 🏪';
       document.getElementById('shopNameField').style.display = isSignUp ? 'block' : 'none';
       document.getElementById('btnAuthAction').innerText = isSignUp ? 'Créer mon espace' : 'Se connecter';
-      document.getElementById('btnToggleAuth').innerText = isSignUp ? 'J\'ai déjà un compte' : 'Créer un compte commerce';
+      document.getElementById('btnToggleAuth').innerText = isSignUp ? 'J\'ai déjà un compte' : 'Créer un compte gratuit';
     }
 
     async function handleAuth() {
@@ -137,61 +174,43 @@
       const password = document.getElementById('passwordInput').value.trim();
       const shopName = document.getElementById('shopNameInput').value.trim();
 
-      if (!email || !password) return alert('Remplissez l\'email et le mot de passe.');
+      if (!email || !password) return alert('Remplissez tous les champs.');
 
-      if (isSignUp) {
-        if (!shopName) return alert('Entrez le nom de votre commerce.');
-        const { data, error } = await supabaseClient.auth.signUp({
-          email,
-          password,
-          options: { data: { shop_name: shopName } }
-        });
-        if (error) alert(error.message);
-        else {
-          alert('Compte créé avec succès !');
-          showDashboard(data.user);
-        }
+      if (document.getElementById('shopNameField').style.display === 'block') {
+        const { data, error } = await supabaseClient.auth.signUp({ email, password });
+        if (error) return alert(error.message);
+        
+        await supabaseClient.from('shops').insert([{ id: data.user.id, shop_name: shopName }]);
+        showDashboard(data.user);
       } else {
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) alert('Email ou mot de passe incorrect.');
+        if (error) alert('Identifiants incorrects.');
         else showDashboard(data.user);
       }
     }
 
-    async function resetPassword() {
-      const email = document.getElementById('emailInput').value.trim();
-      if (!email) {
-        alert('Veuillez inscrire votre email dans le champ Email professionnel ci-dessus.');
-        return;
-      }
-
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://recrutlocal.vercel.app/dashboard.html',
-      });
-
-      if (error) {
-        alert('Erreur : ' + error.message);
-      } else {
-        alert('Un lien de réinitialisation vous a été envoyé par e-mail !');
-      }
-    }
-
-    async function logoutShop() {
-      await supabaseClient.auth.signOut();
-      location.reload();
-    }
-
-    function showDashboard(user) {
+    async function showDashboard(user) {
       document.getElementById('auth-section').style.display = 'none';
       document.getElementById('dashboard-section').style.display = 'block';
 
-      const shopName = user.user_metadata?.shop_name || 'Mon Commerce';
-      document.getElementById('shop-title').innerText = shopName;
-      document.getElementById('poster-shop-name').innerText = shopName;
+      // Charge ou crée la fiche shop
+      let { data: shop } = await supabaseClient.from('shops').select('*').eq('id', user.id).single();
+      if (!shop) {
+        await supabaseClient.from('shops').insert([{ id: user.id, shop_name: 'Mon Commerce' }]);
+        shop = { id: user.id, shop_name: 'Mon Commerce', job_title: 'Équipier', scan_count: 0, is_open: true };
+      }
+      currentShop = shop;
+
+      document.getElementById('shop-title').innerText = shop.shop_name;
+      document.getElementById('poster-shop-name').innerText = shop.shop_name;
+      document.getElementById('poster-job-name').innerText = shop.job_title || '';
+      document.getElementById('jobTitleInput').value = shop.job_title || '';
+      document.getElementById('stat-scans').innerText = shop.scan_count || 0;
+
+      updateStatusButton(shop.is_open);
 
       const candidateUrl = `https://recrutlocal.vercel.app/?shop=${user.id}`;
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(candidateUrl)}`;
-      
       document.getElementById('qr-image').src = qrUrl;
       document.getElementById('poster-qr-img').src = qrUrl;
 
@@ -205,30 +224,95 @@
         .eq('company_id', userId)
         .order('created_at', { ascending: false });
 
-      const container = document.getElementById('list');
+      candidatesData = data || [];
+      document.getElementById('stat-candidates').innerText = `${candidatesData.length} / ${currentShop?.is_pro ? '∞' : '5'}`;
 
-      if (error || !data || data.length === 0) {
-        container.innerHTML = '<p style="color:#777; font-size:14px;">Aucune candidature reçue pour le moment.</p>';
+      const container = document.getElementById('list');
+      if (!data || data.length === 0) {
+        container.innerHTML = '<p style="color:#64748b; font-size:14px; text-align:center;">Aucune candidature pour le moment.</p>';
         return;
       }
 
       container.innerHTML = '';
       data.forEach(c => {
         const cleanPhone = c.phone ? c.phone.replace(/\s+/g, '') : '';
+        const statusClass = `status-${c.status || 'nouveau'}`;
+
         container.innerHTML += `
           <div class="candidate-card">
-            <span class="badge">Expérience : ${c.experience_years || 'Non renseignée'}</span>
-            <div style="font-weight:bold; font-size:16px;">${c.first_name || ''} ${c.last_name || ''}</div>
-            <div style="font-size:13px; color:#555; margin-top:4px;">
-              📱 ${c.phone || 'Non renseigné'} <br>
-              🗓️ Dispo WE : <strong>${c.weekend_ok ? 'Oui' : 'Non'}</strong>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="badge ${statusClass}">${(c.status || 'nouveau').toUpperCase()}</span>
+              <select onchange="updateCandidateStatus('${c.id}', this.value)" style="width:auto; padding:4px; font-size:12px; margin:0;">
+                <option value="nouveau" ${c.status === 'nouveau' ? 'selected' : ''}>Nouveau</option>
+                <option value="rappele" ${c.status === 'rappele' ? 'selected' : ''}>Rappelé</option>
+                <option value="embauche" ${c.status === 'embauche' ? 'selected' : ''}>Embauché</option>
+                <option value="refuse" ${c.status === 'refuse' ? 'selected' : ''}>Refusé</option>
+              </select>
             </div>
-            <a class="btn-contact" href="https://wa.me/${cleanPhone}?text=Bonjour%20${encodeURIComponent(c.first_name || '')},%20suite%20%C3%A0%20votre%20candidature,%20souhaitez-vous%20passer%20un%20entretien%20?" target="_blank">
-              Contacter sur WhatsApp
-            </a>
+
+            <div style="font-weight:bold; font-size:16px; margin-top:6px;">${c.first_name || ''} ${c.last_name || ''}</div>
+            <div style="font-size:13px; color:#475569; margin-top:4px;">
+              Expérience : <strong>${c.experience_years || 'Non renseignée'}</strong> | Dispo WE : <strong>${c.weekend_ok ? 'Oui' : 'Non'}</strong>
+              ${c.cv_url ? `<br>📄 <a href="${c.cv_url}" target="_blank" style="color:#2563eb;">Voir le CV</a>` : ''}
+            </div>
+
+            <div class="actions-grid">
+              <a class="btn-action btn-call" href="tel:${cleanPhone}">📞 Appeler</a>
+              <a class="btn-action btn-wa" href="https://wa.me/${cleanPhone}?text=Bonjour%20${encodeURIComponent(c.first_name || '')},%20suite%20%C3%A0%20votre%20candidature..." target="_blank">💬 WhatsApp</a>
+            </div>
           </div>
         `;
       });
+    }
+
+    async function updateCandidateStatus(candidateId, newStatus) {
+      await supabaseClient.from('candidates').update({ status: newStatus }).eq('id', candidateId);
+      loadCandidates(currentShop.id);
+    }
+
+    async function updateShopSettings() {
+      const newJob = document.getElementById('jobTitleInput').value;
+      await supabaseClient.from('shops').update({ job_title: newJob }).eq('id', currentShop.id);
+      document.getElementById('poster-job-name').innerText = newJob;
+      alert('Affiche mise à jour !');
+    }
+
+    function toggleRecruitmentStatus() {
+      currentShop.is_open = !currentShop.is_open;
+      updateStatusButton(currentShop.is_open);
+      supabaseClient.from('shops').update({ is_open: currentShop.is_open }).eq('id', currentShop.id);
+    }
+
+    function updateStatusButton(isOpen) {
+      const btn = document.getElementById('btn-toggle-open');
+      btn.innerText = isOpen ? 'Ouvert' : 'Fermé';
+      btn.style.background = isOpen ? '#16a34a' : '#dc2626';
+    }
+
+    function exportCSV() {
+      if (candidatesData.length === 0) return alert('Aucune donnée à exporter.');
+      let csvContent = "data:text/csv;charset=utf-8,Prenom,Nom,Telephone,Email,Experience,Dispo_WE,Statut\n";
+      candidatesData.forEach(c => {
+        csvContent += `${c.first_name},${c.last_name},${c.phone},${c.email || ''},${c.experience_years},${c.weekend_ok},${c.status}\n`;
+      });
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `candidats_${currentShop.shop_name}.csv`);
+      document.body.appendChild(link);
+      link.click();
+    }
+
+    async function resetPassword() {
+      const email = document.getElementById('emailInput').value.trim();
+      if (!email) return alert('Indiquez votre email.');
+      await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
+      alert('Lien envoyé par e-mail.');
+    }
+
+    async function logoutShop() {
+      await supabaseClient.auth.signOut();
+      location.reload();
     }
   </script>
 </body>
