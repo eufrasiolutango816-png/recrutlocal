@@ -122,15 +122,15 @@
         </div>
       </div>
 
-      <!-- OFFRE PRO REVISITÉE -->
+      <!-- OFFRE PRO REAL LIVE STRIPE -->
       <div class="card" style="background:#eff6ff; border:1px solid #bfdbfe;">
-        <div style="font-weight:bold; color:#1e40af; font-size:15px;">🚀 Offre Pro (12€ / mois ou 29€ pour 30 jours)</div>
+        <div style="font-weight:bold; color:#1e40af; font-size:15px;">🚀 Passer à l'Offre Pro (12€ / mois)</div>
         <ul style="font-size:13px; color:#334155; padding-left:18px; margin:8px 0;">
-          <li>Candidatures illimitées (dépassez la limite de 5)</li>
-          <li>Alertes SMS instantanées à chaque candidature</li>
-          <li>Export Excel / CSV de vos candidats</li>
+          <li>Candidatures illimitées (débloquez la limite de 5)</li>
+          <li>Export Excel / CSV complet de vos candidats</li>
+          <li>Alertes priorisées par email / notification</li>
         </ul>
-        <a class="btn-stripe" href="https://buy.stripe.com/test_8x28wRbpqdOSei51mLfMA00" target="_blank">S'abonner pour 12€ / mois</a>
+        <a class="btn-stripe" href="https://buy.stripe.com/9B6fZj77JfCid3y99sasg00" target="_blank">S'abonner pour 12€ / mois</a>
       </div>
 
       <!-- LISTE DES CANDIDATS -->
@@ -193,7 +193,6 @@
       document.getElementById('auth-section').style.display = 'none';
       document.getElementById('dashboard-section').style.display = 'block';
 
-      // Charge ou crée la fiche shop
       let { data: shop } = await supabaseClient.from('shops').select('*').eq('id', user.id).single();
       if (!shop) {
         await supabaseClient.from('shops').insert([{ id: user.id, shop_name: 'Mon Commerce' }]);
@@ -307,7 +306,7 @@
       const email = document.getElementById('emailInput').value.trim();
       if (!email) return alert('Indiquez votre email.');
       await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
-      alert('Lien envoyé par e-mail.');
+      alert('Lien de réinitialisation envoyé par e-mail.');
     }
 
     async function logoutShop() {
