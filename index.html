@@ -6,46 +6,60 @@
   <title>RecrutLocal - Postuler</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
-    .card { background: white; max-width: 420px; margin: 20px auto; padding: 24px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-    h2 { margin-top: 0; color: #111; font-size: 22px; text-align: center; }
-    p.sub { color: #666; font-size: 14px; text-align: center; margin-bottom: 20px; }
-    label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #333; }
-    input, select { width: 100%; padding: 12px; margin-bottom: 16px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 15px; }
-    button { width: 100%; padding: 14px; background: #0070f3; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; margin: 0; padding: 16px; color: #1e293b; }
+    .card { background: white; max-width: 440px; margin: 10px auto; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+    h2 { margin-top: 0; color: #0f172a; font-size: 22px; text-align: center; }
+    .badge-shop { background: #eff6ff; color: #2563eb; font-weight: 700; padding: 6px 12px; border-radius: 20px; font-size: 14px; display: inline-block; margin-bottom: 8px; }
+    label { display: block; margin-top: 14px; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: #475569; }
+    input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 15px; }
+    button { width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 20px; }
+    .footer-rgpd { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 16px; line-height: 1.4; }
   </style>
 </head>
 <body>
   <div class="card" id="form-card">
-    <h2>Postuler en 1 minute 🚀</h2>
-    <p class="sub">Complétez ce mini-formulaire pour le recruteur.</p>
-    
+    <div style="text-align:center;">
+      <span class="badge-shop" id="shop-name-display">Chargement...</span>
+      <h2 id="job-title-display">Postuler en 1 minute 🚀</h2>
+      <p style="color:#64748b; font-size:14px; margin-top:0;">Réponse garantie sous 48h</p>
+    </div>
+
     <form id="candidate-form">
-      <label>Prénom</label>
+      <label>Prénom *</label>
       <input required id="firstName" type="text" placeholder="Ex: Jean">
 
-      <label>Nom</label>
+      <label>Nom *</label>
       <input required id="lastName" type="text" placeholder="Ex: Dupont">
 
-      <label>Téléphone Mobile</label>
+      <label>Téléphone Mobile *</label>
       <input required id="phone" type="tel" placeholder="06 12 34 56 78">
+
+      <label>Email (facultatif)</label>
+      <input id="email" type="email" placeholder="jean.dupont@email.com">
 
       <label>Disponible le week-end et en soirée ?</label>
       <select id="weekendOk">
-        <option value="true">Oui, tout à fait</option>
-        <option value="false">Non</option>
+        <option value="true">Oui, totalement disponible</option>
+        <option value="false">Non, disponibilités restreintes</option>
       </select>
 
       <label>Expérience dans le domaine</label>
       <select id="experience">
-        <option value="0">Aucune expérience</option>
-        <option value="<1">Moins d'un an</option>
-        <option value="1-3">1 à 3 ans</option>
-        <option value=">3">Plus de 3 ans</option>
+        <option value="Débutant">Aucune expérience (débutant)</option>
+        <option value="< 1 an">Moins d'un an</option>
+        <option value="1 à 3 ans">1 à 3 ans</option>
+        <option value="+3 ans">Plus de 3 ans</option>
       </select>
+
+      <label>Lien CV / Portfolio (facultatif)</label>
+      <input id="cvUrl" type="url" placeholder="https://lien-vers-mon-cv.fr">
 
       <button type="submit" id="btn-submit">Envoyer ma candidature</button>
     </form>
+
+    <div class="footer-rgpd">
+      🔒 Vos données sont transmises exclusivement à ce commerçant pour ce recrutement. Conformément au RGPD, vous disposez d'un droit d'accès et de suppression.
+    </div>
   </div>
 
   <script>
@@ -53,9 +67,38 @@
     const SUPABASE_KEY = 'sb_publishable_gee-Ly8I2QyduMq_rPXcyA_hg3jnhHi';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Récupérer le paramètre shop dans l'URL du QR Code (ex: ?shop=usr_12345)
     const urlParams = new URLSearchParams(window.location.search);
-    const shopId = urlParams.get('shop') || 'default_shop';
+    const shopId = urlParams.get('shop');
+
+    initForm();
+
+    async function initForm() {
+      if (!shopId) {
+        document.getElementById('form-card').innerHTML = '<h2>Commerce non spécifié.</h2>';
+        return;
+      }
+
+      // Incrémente le compteur de scans
+      await supabaseClient.rpc('increment_scan', { shop_id_param: shopId }).catch(() => {});
+
+      // Récupère les infos du commerce
+      const { data: shop } = await supabaseClient.from('shops').select('*').eq('id', shopId).single();
+
+      if (shop) {
+        if (!shop.is_open) {
+          document.getElementById('form-card').innerHTML = `
+            <div style="text-align:center; padding:20px;">
+              <h2>🔒 Recrutement fermé</h2>
+              <p style="color:#64748b;">Le commerce <strong>${shop.shop_name}</strong> a pourvu ses postes pour le moment.</p>
+            </div>`;
+          return;
+        }
+        document.getElementById('shop-name-display').innerText = shop.shop_name;
+        document.getElementById('job-title-display').innerText = `Poste : ${shop.job_title}`;
+      } else {
+        document.getElementById('shop-name-display').innerText = 'Commerce Partenaire';
+      }
+    }
 
     document.getElementById('candidate-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -63,17 +106,34 @@
       btn.innerText = 'Envoi en cours...';
       btn.disabled = true;
 
+      // Vérification limite gratuite (5 candidatures/mois)
+      const { data: countData } = await supabaseClient
+        .from('candidates')
+        .select('id', { count: 'exact' })
+        .eq('company_id', shopId);
+
+      const { data: shop } = await supabaseClient.from('shops').select('is_pro').eq('id', shopId).single();
+
+      if (!shop?.is_pro && countData && countData.length >= 5) {
+        alert("Ce commerce a atteint sa limite de candidatures gratuites pour ce mois-ci.");
+        btn.innerText = 'Envoyer ma candidature';
+        btn.disabled = false;
+        return;
+      }
+
       const payload = {
         first_name: document.getElementById('firstName').value,
         last_name: document.getElementById('lastName').value,
         phone: document.getElementById('phone').value,
-        email: 'candidat@mobile.com',
+        email: document.getElementById('email').value || null,
         weekend_ok: document.getElementById('weekendOk').value === 'true',
         experience_years: document.getElementById('experience').value,
-        company_id: shopId
+        cv_url: document.getElementById('cvUrl').value || null,
+        company_id: shopId,
+        job_applied: document.getElementById('job-title-display').innerText
       };
 
-      const { data, error } = await supabaseClient.from('candidates').insert([payload]);
+      const { error } = await supabaseClient.from('candidates').insert([payload]);
 
       if (error) {
         alert('Erreur : ' + error.message);
@@ -81,8 +141,14 @@
         btn.disabled = false;
       } else {
         document.getElementById('form-card').innerHTML = `
-          <h2 style="text-align:center;">🎉 Candidature envoyée !</h2>
-          <p style="text-align:center; color:#666;">Le gérant du commerce a bien reçu votre profil.</p>
+          <div style="text-align:center; padding:20px 0;">
+            <div style="font-size:48px; margin-bottom:12px;">🎉</div>
+            <h2>Candidature envoyée !</h2>
+            <p style="color:#475569; font-size:15px; line-height:1.5;">
+              Le commerce a bien reçu vos informations.<br>
+              <strong>Il vous rappellera sous 48 h</strong> si votre profil correspond.
+            </p>
+          </div>
         `;
       }
     });
