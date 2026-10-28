@@ -13,7 +13,12 @@
     label { display: block; margin-top: 14px; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: #475569; }
     input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 15px; }
     button { width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 20px; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .consent { display: flex; gap: 10px; align-items: flex-start; margin-top: 18px; font-size: 13px; color: #475569; line-height: 1.4; font-weight: 400; }
+    .consent input { width: auto; margin-top: 3px; flex-shrink: 0; }
+    .consent a { color: #2563eb; }
     .footer-rgpd { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 16px; line-height: 1.4; }
+    .footer-rgpd a { color: #94a3b8; }
   </style>
 </head>
 <body>
@@ -26,16 +31,16 @@
 
     <form id="candidate-form">
       <label>Prénom *</label>
-      <input required id="firstName" type="text" placeholder="Ex: Jean">
+      <input required id="firstName" type="text" maxlength="60" placeholder="Ex: Jean">
 
       <label>Nom *</label>
-      <input required id="lastName" type="text" placeholder="Ex: Dupont">
+      <input required id="lastName" type="text" maxlength="60" placeholder="Ex: Dupont">
 
       <label>Téléphone Mobile *</label>
-      <input required id="phone" type="tel" placeholder="06 12 34 56 78">
+      <input required id="phone" type="tel" maxlength="20" placeholder="06 12 34 56 78">
 
       <label>Email (facultatif)</label>
-      <input id="email" type="email" placeholder="jean.dupont@email.com">
+      <input id="email" type="email" maxlength="120" placeholder="jean.dupont@email.com">
 
       <label>Disponible le week-end et en soirée ?</label>
       <select id="weekendOk">
@@ -52,13 +57,20 @@
       </select>
 
       <label>Lien CV / Portfolio (facultatif)</label>
-      <input id="cvUrl" type="url" placeholder="https://lien-vers-mon-cv.fr">
+      <input id="cvUrl" type="url" maxlength="300" placeholder="https://lien-vers-mon-cv.fr">
+
+      <label class="consent" for="rgpd">
+        <input type="checkbox" id="rgpd" required>
+        <span>J'accepte que mes informations soient transmises à ce commerce pour être recontacté(e) au sujet de ce recrutement.
+        <a href="/confidentialite.html" target="_blank" rel="noopener">En savoir plus</a></span>
+      </label>
 
       <button type="submit" id="btn-submit">Envoyer ma candidature</button>
     </form>
 
     <div class="footer-rgpd">
-      🔒 Vos données sont transmises exclusivement à ce commerçant pour ce recrutement. Conformément au RGPD, vous disposez d'un droit d'accès et de suppression.
+      🔒 Vos données sont transmises exclusivement à ce commerçant pour ce recrutement. Conformément au RGPD, vous disposez d'un droit d'accès et de suppression.<br>
+      <a href="/confidentialite.html" target="_blank" rel="noopener">Confidentialité et mentions légales</a>
     </div>
   </div>
 
@@ -70,6 +82,16 @@
     const urlParams = new URLSearchParams(window.location.search);
     const shopId = urlParams.get('shop');
 
+    // Sécurité : échappe le texte avant de l'insérer dans la page
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     initForm();
 
     async function initForm() {
@@ -78,8 +100,10 @@
         return;
       }
 
-      // Incrémente le compteur de scans
-      await supabaseClient.rpc('increment_scan', { shop_id_param: shopId }).catch(() => {});
+      // Incrémente le compteur de scans (sans bloquer la page en cas d'erreur)
+      try {
+        await supabaseClient.rpc('increment_scan', { shop_id_param: shopId });
+      } catch (e) {}
 
       // Récupère les infos du commerce
       const { data: shop } = await supabaseClient.from('shops').select('*').eq('id', shopId).single();
@@ -89,12 +113,14 @@
           document.getElementById('form-card').innerHTML = `
             <div style="text-align:center; padding:20px;">
               <h2>🔒 Recrutement fermé</h2>
-              <p style="color:#64748b;">Le commerce <strong>${shop.shop_name}</strong> a pourvu ses postes pour le moment.</p>
+              <p style="color:#64748b;">Le commerce <strong>${escapeHtml(shop.shop_name)}</strong> a pourvu ses postes pour le moment.</p>
             </div>`;
           return;
         }
         document.getElementById('shop-name-display').innerText = shop.shop_name;
-        document.getElementById('job-title-display').innerText = `Poste : ${shop.job_title}`;
+        if (shop.job_title) {
+          document.getElementById('job-title-display').innerText = `Poste : ${shop.job_title}`;
+        }
       } else {
         document.getElementById('shop-name-display').innerText = 'Commerce Partenaire';
       }
@@ -102,6 +128,12 @@
 
     document.getElementById('candidate-form').addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      if (!document.getElementById('rgpd').checked) {
+        alert('Merci de cocher la case de consentement pour envoyer votre candidature.');
+        return;
+      }
+
       const btn = document.getElementById('btn-submit');
       btn.innerText = 'Envoi en cours...';
       btn.disabled = true;
@@ -122,13 +154,13 @@
       }
 
       const payload = {
-        first_name: document.getElementById('firstName').value,
-        last_name: document.getElementById('lastName').value,
-        phone: document.getElementById('phone').value,
-        email: document.getElementById('email').value || null,
+        first_name: document.getElementById('firstName').value.trim(),
+        last_name: document.getElementById('lastName').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        email: document.getElementById('email').value.trim() || null,
         weekend_ok: document.getElementById('weekendOk').value === 'true',
         experience_years: document.getElementById('experience').value,
-        cv_url: document.getElementById('cvUrl').value || null,
+        cv_url: document.getElementById('cvUrl').value.trim() || null,
         company_id: shopId,
         job_applied: document.getElementById('job-title-display').innerText
       };
