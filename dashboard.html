@@ -8,7 +8,12 @@
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
     .container { max-width: 600px; margin: 0 auto; }
-    h2 { color: #111; font-size: 22px; margin-bottom: 20px; }
+    h2 { color: #111; font-size: 22px; margin-bottom: 5px; }
+    .shop-title { color: #0070f3; font-weight: bold; margin-bottom: 20px; font-size: 14px; text-transform: uppercase; }
+    
+    .qr-box { background: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .qr-box img { width: 160px; height: 160px; margin: 10px 0; }
+    
     .card { background: white; padding: 18px; border-radius: 12px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
     .badge { display: inline-block; background: #e6f0ff; color: #0066cc; padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
     .name { font-size: 18px; font-weight: bold; margin: 0 0 6px 0; color: #222; }
@@ -18,7 +23,20 @@
 </head>
 <body>
   <div class="container">
-    <h2>Candidatures reçues 📥</h2>
+    <h2>Espace Gérant 📥</h2>
+    <div class="shop-title" id="display-shop-id">Commerce : ...</div>
+
+    <!-- Zone QR Code du commerce -->
+    <div class="qr-box">
+      <div style="font-weight: 600; font-size: 15px;">Votre QR Code Candidat 📱</div>
+      <p style="font-size: 13px; color: #666; margin: 4px 0 10px 0;">Faites scanner ce code sur votre vitrine :</p>
+      <img id="qr-image" src="" alt="QR Code">
+      <div>
+        <a id="candidate-link" href="#" target="_blank" style="font-size: 12px; color: #0070f3;">Ouvrir le formulaire</a>
+      </div>
+    </div>
+
+    <h3>Candidatures reçues</h3>
     <div id="list">Chargement des candidats...</div>
   </div>
 
@@ -27,10 +45,22 @@
     const SUPABASE_KEY = 'sb_publishable_gee-Ly8I2QyduMq_rPXcyA_hg3jnhHi';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // Récupérer le shop dans l'URL du dashboard (ex: ?shop=boulangerie_1)
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentShop = urlParams.get('shop') || 'default_shop';
+
+    document.getElementById('display-shop-id').innerText = `Commerce ID : ${currentShop}`;
+
+    // Génération du lien de candidature et du QR Code unique
+    const candidateUrl = `https://recrutlocal.vercel.app/?shop=${encodeURIComponent(currentShop)}`;
+    document.getElementById('candidate-link').href = candidateUrl;
+    document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(candidateUrl)}`;
+
     async function loadCandidates() {
       const { data, error } = await supabaseClient
         .from('candidates')
         .select('*')
+        .eq('company_id', currentShop)
         .order('created_at', { ascending: false });
 
       const container = document.getElementById('list');
@@ -41,7 +71,7 @@
       }
 
       if (!data || data.length === 0) {
-        container.innerHTML = '<p>Aucune candidature pour le moment.</p>';
+        container.innerHTML = '<p style="color:#777;">Aucune candidature reçue pour ce commerce.</p>';
         return;
       }
 
