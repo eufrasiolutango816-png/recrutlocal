@@ -14,13 +14,14 @@
     input { width: 100%; padding: 12px; margin-bottom: 16px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 15px; }
     button { width: 100%; padding: 14px; background: #0070f3; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
     .btn-secondary { background: #111; margin-top: 10px; }
+    .btn-stripe { background: #635bff; color: white; text-decoration: none; display: block; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 10px; }
     .qr-box { text-align: center; background: #fafafa; padding: 16px; border-radius: 12px; border: 1px dashed #ccc; margin-bottom: 20px; }
     .qr-box img { width: 180px; height: 180px; margin: 10px 0; }
     .badge { display: inline-block; background: #e6f0ff; color: #0066cc; padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
     .candidate-card { background: white; padding: 16px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #eee; }
     .btn-contact { display: inline-block; padding: 10px 14px; background: #25D366; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; margin-top: 8px; }
 
-    /* ZONE D'IMPRESSION DE L'AFFICHE VITRINE */
+    /* AFFICHE A4 IMPRIMABLE */
     #printable-poster { display: none; }
     @media print {
       body * { visibility: hidden; }
@@ -42,7 +43,7 @@
 </head>
 <body>
 
-  <!-- Affiche vitrine prête pour l'impression A4 -->
+  <!-- Affiche Vitrine A4 -->
   <div id="printable-poster">
     <div class="poster-title">ON RECRUTE ! 🚀</div>
     <div class="poster-shop" id="poster-shop-name">...</div>
@@ -53,7 +54,7 @@
 
   <div class="container">
 
-    <!-- ÉCRAN : INSCRIPTION / CONNEXION -->
+    <!-- ECRAN INSCRIPTION / CONNEXION -->
     <div id="auth-section" class="card">
       <h2 id="auth-title">Connexion Gérant 🏪</h2>
       <p style="text-align:center; color:#666; font-size:14px; margin-bottom:20px;">Accédez à vos candidatures et à votre affiche QR Code.</p>
@@ -71,12 +72,16 @@
 
       <button id="btnAuthAction" onclick="handleAuth()">Se connecter</button>
       <button class="btn-secondary" id="btnToggleAuth" onclick="toggleAuthMode()">Créer un compte commerce</button>
+      
+      <p style="text-align:center; margin-top:16px;">
+        <a href="#" onclick="resetPassword()" style="color:#0070f3; font-size:13px; text-decoration:none; font-weight:600;">Mot de passe oublié ?</a>
+      </p>
     </div>
 
-    <!-- ÉCRAN : DASHBOARD GÉRANT -->
+    <!-- ECRAN DASHBOARD GÉRANT -->
     <div id="dashboard-section" style="display: none;">
       <div class="card">
-        <div style="display:flex; justify-between; align-items:center; margin-bottom:15px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
           <h2 id="shop-title" style="margin:0; text-align:left;">...</h2>
           <button onclick="logoutShop()" style="width:auto; padding:6px 12px; background:#eee; color:#333; font-size:12px;">Déconnexion</button>
         </div>
@@ -87,6 +92,13 @@
           <img id="qr-image" src="" alt="QR Code">
           
           <button onclick="window.print()" style="background:#25D366; margin-top:10px;">🖨️ Imprimer mon Affiche Vitrine (A4)</button>
+        </div>
+
+        <!-- ZONE MONÉTISATION STRIPE -->
+        <div style="background:#f0f7ff; border:1px solid #cce3ff; padding:16px; border-radius:12px; margin-bottom:20px;">
+          <div style="font-weight:bold; color:#0055b3; font-size:15px;">⚡ Passer à l'offre Pro (29€/mois)</div>
+          <p style="font-size:13px; color:#444; margin:6px 0 10px 0;">Débloquez les candidatures illimitées et le support prioritaire.</p>
+          <a class="btn-stripe" href="https://buy.stripe.com/test_8x28wRbpqdOSei51mLfMA00" target="_blank">S'abonner pour 29€ / mois</a>
         </div>
 
         <h3>Candidatures reçues 📥</h3>
@@ -146,6 +158,24 @@
       }
     }
 
+    async function resetPassword() {
+      const email = document.getElementById('emailInput').value.trim();
+      if (!email) {
+        alert('Veuillez inscrire votre email dans le champ Email professionnel ci-dessus.');
+        return;
+      }
+
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://recrutlocal.vercel.app/dashboard.html',
+      });
+
+      if (error) {
+        alert('Erreur : ' + error.message);
+      } else {
+        alert('Un lien de réinitialisation vous a été envoyé par e-mail !');
+      }
+    }
+
     async function logoutShop() {
       await supabaseClient.auth.signOut();
       location.reload();
@@ -159,7 +189,6 @@
       document.getElementById('shop-title').innerText = shopName;
       document.getElementById('poster-shop-name').innerText = shopName;
 
-      // URL unique pour les candidats qui pointe vers la racine du site
       const candidateUrl = `https://recrutlocal.vercel.app/?shop=${user.id}`;
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(candidateUrl)}`;
       
