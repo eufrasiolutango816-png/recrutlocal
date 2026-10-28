@@ -106,7 +106,8 @@
       } catch (e) {}
 
       // Récupère les infos du commerce
-      const { data: shop } = await supabaseClient.from('shops').select('*').eq('id', shopId).single();
+      const { data: shopRows } = await supabaseClient.rpc('get_shop_public', { shop_id_param: shopId });
+      const shop = shopRows && shopRows[0];
 
       if (shop) {
         if (!shop.is_open) {
@@ -138,20 +139,7 @@
       btn.innerText = 'Envoi en cours...';
       btn.disabled = true;
 
-      // Vérification limite gratuite (5 candidatures/mois)
-      const { data: countData } = await supabaseClient
-        .from('candidates')
-        .select('id', { count: 'exact' })
-        .eq('company_id', shopId);
-
-      const { data: shop } = await supabaseClient.from('shops').select('is_pro').eq('id', shopId).single();
-
-      if (!shop?.is_pro && countData && countData.length >= 5) {
-        alert("Ce commerce a atteint sa limite de candidatures gratuites pour ce mois-ci.");
-        btn.innerText = 'Envoyer ma candidature';
-        btn.disabled = false;
-        return;
-      }
+      // La limite gratuite (5 candidatures/mois) est contrôlée côté serveur par Supabase
 
       const payload = {
         first_name: document.getElementById('firstName').value.trim(),
@@ -168,7 +156,7 @@
       const { error } = await supabaseClient.from('candidates').insert([payload]);
 
       if (error) {
-        alert('Erreur : ' + error.message);
+        alert(error.message || 'Une erreur est survenue, réessayez.');
         btn.innerText = 'Envoyer ma candidature';
         btn.disabled = false;
       } else {
