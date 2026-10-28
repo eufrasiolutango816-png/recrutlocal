@@ -15,7 +15,9 @@
     button { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; }
     .btn-secondary { background: #0f172a; margin-top: 8px; }
     .btn-stripe { background: #635bff; color: white; text-decoration: none; display: block; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold; }
-    
+    .legal-link { text-align: center; font-size: 12px; margin-top: 16px; }
+    .legal-link a { color: #64748b; }
+
     .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
     .stat-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 10px; text-align: center; }
     .stat-num { font-size: 22px; font-weight: 800; color: #2563eb; }
@@ -62,7 +64,7 @@
     <!-- AUTHENTIFICATION -->
     <div id="auth-section" class="card">
       <h2 id="auth-title">Espace Commerçant 🏪</h2>
-      
+
       <div id="shopNameField" style="display:none;">
         <label>Nom de votre commerce</label>
         <input id="shopNameInput" type="text" placeholder="Ex: Boulangerie Saint-Michel">
@@ -76,15 +78,20 @@
 
       <button id="btnAuthAction" onclick="handleAuth()">Se connecter</button>
       <button class="btn-secondary" id="btnToggleAuth" onclick="toggleAuthMode()">Créer un compte gratuit</button>
-      
+
       <p style="text-align:center; margin-top:14px;">
-        <a href="#" onclick="resetPassword()" style="color:#2563eb; font-size:13px; text-decoration:none;">Mot de passe oublié ?</a>
+        <a href="#" onclick="resetPassword(); return false;" style="color:#2563eb; font-size:13px; text-decoration:none;">Mot de passe oublié ?</a>
+      </p>
+
+      <p class="legal-link">
+        En utilisant RecrutLocal, vous acceptez nos
+        <a href="/confidentialite.html" target="_blank">mentions légales et conditions de confidentialité</a>.
       </p>
     </div>
 
     <!-- DASHBOARD -->
     <div id="dashboard-section" style="display: none;">
-      
+
       <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <h2 id="shop-title" style="margin:0;">...</h2>
@@ -107,7 +114,7 @@
         <div style="background:#f8fafc; padding:12px; border-radius:10px; margin-bottom:16px;">
           <label>Poste recherché sur l'affiche</label>
           <input id="jobTitleInput" type="text" placeholder="Ex: Serveur / Vendeur">
-          
+
           <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
             <span style="font-size:13px; font-weight:600;">Statut du recrutement :</span>
             <button id="btn-toggle-open" onclick="toggleRecruitmentStatus()" style="width:auto; padding:6px 12px; font-size:12px; background:#16a34a;">Ouvert</button>
@@ -142,6 +149,10 @@
         <div id="list">Chargement...</div>
       </div>
 
+      <p class="legal-link">
+        <a href="/confidentialite.html" target="_blank">Confidentialité et mentions légales</a>
+      </p>
+
     </div>
 
   </div>
@@ -153,6 +164,55 @@
 
     let currentShop = null;
     let candidatesData = [];
+
+    const ALLOWED_STATUS = ['nouveau', 'rappele', 'embauche', 'refuse'];
+
+    // Sécurité : échappe le texte saisi par les candidats avant de l'afficher
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Sécurité : n'autorise que les liens http(s) pour les CV
+    function safeUrl(url) {
+      try {
+        const u = new URL(url);
+        return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : '';
+      } catch (e) {
+        return '';
+      }
+    }
+
+    // Numéro pour le bouton Appeler (chiffres et + uniquement)
+    function cleanPhoneNumber(phone) {
+      return String(phone || '').replace(/[^\d+]/g, '');
+    }
+
+    // Numéro au format international pour WhatsApp (06... devient 336...)
+    function whatsappNumber(phone) {
+      let s = cleanPhoneNumber(phone);
+      if (s.startsWith('+')) return s.slice(1);
+      if (s.startsWith('00')) return s.slice(2);
+      if (s.startsWith('0')) return '33' + s.slice(1);
+      return s;
+    }
+
+    // Retour du lien "mot de passe oublié" : permet de choisir un nouveau mot de passe
+    supabaseClient.auth.onAuthStateChange(async (event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        const newPassword = prompt('Choisissez votre nouveau mot de passe (8 caractères minimum) :');
+        if (newPassword && newPassword.length >= 8) {
+          const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+          alert(error ? error.message : 'Mot de passe mis à jour.');
+        } else if (newPassword) {
+          alert('Mot de passe trop court (8 caractères minimum).');
+        }
+      }
+    });
 
     checkSession();
 
@@ -171,7 +231,7 @@
 
     async function handleAuth() {
       const email = document.getElementById('emailInput').value.trim();
-      const password = document.getElementById('passwordInput').value.trim();
+      const password = document.getElementById('passwordInput').value;
       const shopName = document.getElementById('shopNameInput').value.trim();
 
       if (!email || !password) return alert('Remplissez tous les champs.');
@@ -179,7 +239,7 @@
       if (document.getElementById('shopNameField').style.display === 'block') {
         const { data, error } = await supabaseClient.auth.signUp({ email, password });
         if (error) return alert(error.message);
-        
+
         await supabaseClient.from('shops').insert([{ id: data.user.id, shop_name: shopName }]);
         showDashboard(data.user);
       } else {
@@ -223,10 +283,16 @@
         .eq('company_id', userId)
         .order('created_at', { ascending: false });
 
+      const container = document.getElementById('list');
+
+      if (error) {
+        container.innerHTML = '<p style="color:#991b1b; font-size:14px; text-align:center;">Impossible de charger les candidatures. Réessayez.</p>';
+        return;
+      }
+
       candidatesData = data || [];
       document.getElementById('stat-candidates').innerText = `${candidatesData.length} / ${currentShop?.is_pro ? '∞' : '5'}`;
 
-      const container = document.getElementById('list');
       if (!data || data.length === 0) {
         container.innerHTML = '<p style="color:#64748b; font-size:14px; text-align:center;">Aucune candidature pour le moment.</p>';
         return;
@@ -234,30 +300,32 @@
 
       container.innerHTML = '';
       data.forEach(c => {
-        const cleanPhone = c.phone ? c.phone.replace(/\s+/g, '') : '';
-        const statusClass = `status-${c.status || 'nouveau'}`;
+        const status = ALLOWED_STATUS.includes(c.status) ? c.status : 'nouveau';
+        const phoneCall = cleanPhoneNumber(c.phone);
+        const phoneWa = whatsappNumber(c.phone);
+        const cvLink = safeUrl(c.cv_url);
 
         container.innerHTML += `
           <div class="candidate-card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span class="badge ${statusClass}">${(c.status || 'nouveau').toUpperCase()}</span>
-              <select onchange="updateCandidateStatus('${c.id}', this.value)" style="width:auto; padding:4px; font-size:12px; margin:0;">
-                <option value="nouveau" ${c.status === 'nouveau' ? 'selected' : ''}>Nouveau</option>
-                <option value="rappele" ${c.status === 'rappele' ? 'selected' : ''}>Rappelé</option>
-                <option value="embauche" ${c.status === 'embauche' ? 'selected' : ''}>Embauché</option>
-                <option value="refuse" ${c.status === 'refuse' ? 'selected' : ''}>Refusé</option>
+              <span class="badge status-${status}">${status.toUpperCase()}</span>
+              <select onchange="updateCandidateStatus('${escapeHtml(c.id)}', this.value)" style="width:auto; padding:4px; font-size:12px; margin:0;">
+                <option value="nouveau" ${status === 'nouveau' ? 'selected' : ''}>Nouveau</option>
+                <option value="rappele" ${status === 'rappele' ? 'selected' : ''}>Rappelé</option>
+                <option value="embauche" ${status === 'embauche' ? 'selected' : ''}>Embauché</option>
+                <option value="refuse" ${status === 'refuse' ? 'selected' : ''}>Refusé</option>
               </select>
             </div>
 
-            <div style="font-weight:bold; font-size:16px; margin-top:6px;">${c.first_name || ''} ${c.last_name || ''}</div>
+            <div style="font-weight:bold; font-size:16px; margin-top:6px;">${escapeHtml(c.first_name)} ${escapeHtml(c.last_name)}</div>
             <div style="font-size:13px; color:#475569; margin-top:4px;">
-              Expérience : <strong>${c.experience_years || 'Non renseignée'}</strong> | Dispo WE : <strong>${c.weekend_ok ? 'Oui' : 'Non'}</strong>
-              ${c.cv_url ? `<br>📄 <a href="${c.cv_url}" target="_blank" style="color:#2563eb;">Voir le CV</a>` : ''}
+              Expérience : <strong>${escapeHtml(c.experience_years || 'Non renseignée')}</strong> | Dispo WE : <strong>${c.weekend_ok ? 'Oui' : 'Non'}</strong>
+              ${cvLink ? `<br>📄 <a href="${escapeHtml(cvLink)}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">Voir le CV</a>` : ''}
             </div>
 
             <div class="actions-grid">
-              <a class="btn-action btn-call" href="tel:${cleanPhone}">📞 Appeler</a>
-              <a class="btn-action btn-wa" href="https://wa.me/${cleanPhone}?text=Bonjour%20${encodeURIComponent(c.first_name || '')},%20suite%20%C3%A0%20votre%20candidature..." target="_blank">💬 WhatsApp</a>
+              <a class="btn-action btn-call" href="tel:${escapeHtml(phoneCall)}">📞 Appeler</a>
+              <a class="btn-action btn-wa" href="https://wa.me/${escapeHtml(phoneWa)}?text=Bonjour%20${encodeURIComponent(c.first_name || '')},%20suite%20%C3%A0%20votre%20candidature..." target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>
             </div>
           </div>
         `;
@@ -265,6 +333,7 @@
     }
 
     async function updateCandidateStatus(candidateId, newStatus) {
+      if (!ALLOWED_STATUS.includes(newStatus)) return;
       await supabaseClient.from('candidates').update({ status: newStatus }).eq('id', candidateId);
       loadCandidates(currentShop.id);
     }
@@ -288,25 +357,38 @@
       btn.style.background = isOpen ? '#16a34a' : '#dc2626';
     }
 
+    // Une cellule CSV entre guillemets (protège aussi contre les formules Excel)
+    function csvCell(value) {
+      let s = String(value ?? '');
+      if (/^[=+\-@]/.test(s)) s = "'" + s;
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+
     function exportCSV() {
       if (candidatesData.length === 0) return alert('Aucune donnée à exporter.');
-      let csvContent = "data:text/csv;charset=utf-8,Prenom,Nom,Telephone,Email,Experience,Dispo_WE,Statut\n";
-      candidatesData.forEach(c => {
-        csvContent += `${c.first_name},${c.last_name},${c.phone},${c.email || ''},${c.experience_years},${c.weekend_ok},${c.status}\n`;
-      });
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `candidats_${currentShop.shop_name}.csv`);
+      // Séparateur ";" : s'ouvre correctement dans Excel en français
+      const header = ['Prenom', 'Nom', 'Telephone', 'Email', 'Experience', 'Dispo_WE', 'Statut'].join(';');
+      const rows = candidatesData.map(c => [
+        c.first_name, c.last_name, c.phone, c.email || '', c.experience_years, c.weekend_ok ? 'Oui' : 'Non', c.status
+      ].map(csvCell).join(';'));
+      const blob = new Blob(['\ufeff' + header + '\n' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `candidats_${currentShop.shop_name}.csv`;
       document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
     }
 
     async function resetPassword() {
       const email = document.getElementById('emailInput').value.trim();
       if (!email) return alert('Indiquez votre email.');
-      await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
-      alert('Lien de réinitialisation envoyé par e-mail.');
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/dashboard.html'
+      });
+      if (error) return alert(error.message);
+      alert('Si cet email existe, un lien de réinitialisation vient d\'être envoyé.');
     }
 
     async function logoutShop() {
