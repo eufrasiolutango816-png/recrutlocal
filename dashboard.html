@@ -112,6 +112,9 @@
 
         <!-- REGLAGES RECRUTEMENT -->
         <div style="background:#f8fafc; padding:12px; border-radius:10px; margin-bottom:16px;">
+          <label>Nom du commerce (affiché sur l'affiche)</label>
+          <input id="shopNameEdit" type="text" maxlength="80" placeholder="Ex: Boulangerie Saint-Michel">
+
           <label>Poste recherché sur l'affiche</label>
           <input id="jobTitleInput" type="text" placeholder="Ex: Serveur / Vendeur">
 
@@ -268,6 +271,7 @@
       document.getElementById('poster-shop-name').innerText = shop.shop_name;
       document.getElementById('poster-job-name').innerText = shop.job_title || '';
       document.getElementById('jobTitleInput').value = shop.job_title || '';
+      document.getElementById('shopNameEdit').value = shop.shop_name || '';
       document.getElementById('stat-scans').innerText = shop.scan_count || 0;
 
       updateStatusButton(shop.is_open);
@@ -343,8 +347,20 @@
     }
 
     async function updateShopSettings() {
-      const newJob = document.getElementById('jobTitleInput').value;
-      await supabaseClient.from('shops').update({ job_title: newJob }).eq('id', currentShop.id);
+      const newName = document.getElementById('shopNameEdit').value.trim();
+      const newJob = document.getElementById('jobTitleInput').value.trim();
+      if (!newName) return alert('Indiquez le nom de votre commerce.');
+
+      const { error } = await supabaseClient
+        .from('shops')
+        .update({ shop_name: newName, job_title: newJob })
+        .eq('id', currentShop.id);
+      if (error) return alert('Erreur : ' + error.message);
+
+      currentShop.shop_name = newName;
+      currentShop.job_title = newJob;
+      document.getElementById('shop-title').innerText = newName;
+      document.getElementById('poster-shop-name').innerText = newName;
       document.getElementById('poster-job-name').innerText = newJob;
       alert('Affiche mise à jour !');
     }
